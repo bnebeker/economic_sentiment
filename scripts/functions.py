@@ -32,5 +32,7 @@ def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None)
     df = pd.concat(data_list)
     print(df.shape)
     ## columns w/ spaces to _
+    df.columns = df.columns.str.replace(' ', '_')
+    df.columns = map(str.lower, df.columns)
 
     return df
