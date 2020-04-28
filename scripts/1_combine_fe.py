@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
@@ -47,6 +48,9 @@ for col in col_list:
 
 # fill nulls with zeros
 df.fillna(0, inplace=True)
+
+# replace inf with 1
+df.replace([np.inf], 1, inplace=True)
 
 # drop first row, no lagged features
 df.drop(df.index[0], inplace=True)
