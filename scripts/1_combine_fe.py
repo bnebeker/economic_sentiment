@@ -35,9 +35,24 @@ df = df_t.merge(
     on='date'
 )
 
+# get lag and trend
+# not good process but small df, fine for now
+col_list = df.columns[1:-2]
+
+for col in col_list:
+    new_col = col + '_lag'
+    df.loc[:, new_col] = df.loc[:, col].shift(1)
+    df.loc[:, col + '_trend'] = df.loc[:, col] - df.loc[:, new_col]
+    df.loc[:, col + '_pct_change'] = (df.loc[:, col] - df.loc[:, new_col]) / df.loc[:, new_col]
+
+# fill nulls with zeros
+df.fillna(0, inplace=True)
+
+# drop first row, no lagged features
+df.drop(df.index[0], inplace=True)
+
 df.to_csv(
-    './data/combined_data_full_us.csv.tar.bz2',
+    './data/prepared_data_full_us.csv.tar.bz2',
     compression='bz2',
     index=False
 )
-
