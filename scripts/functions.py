@@ -36,3 +36,20 @@ def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None)
     df.columns = map(str.lower, df.columns)
 
     return df
+
+
+def google_trends_historical(kw_list=None, year_end='2020', month_end='04', geo="US"):
+    pytrend = TrendReq()
+
+    start_date = '2004-01-01'
+    end_date = str(year_end) + '-' + str(month_end) + '-' + '01'
+    timeframe = start_date + ' ' + end_date
+
+    pytrend.build_payload(kw_list, cat=0, timeframe=timeframe, geo=geo, gprop='')
+
+    df = pytrend.interest_over_time()
+    df.reset_index(inplace=True)
+    df.columns = df.columns.str.replace(' ', '_')
+    df.columns = map(str.lower, df.columns)
+
+    return df
