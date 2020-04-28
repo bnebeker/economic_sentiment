@@ -51,6 +51,13 @@ df.fillna(0, inplace=True)
 # drop first row, no lagged features
 df.drop(df.index[0], inplace=True)
 
+# bring target values to the front
+cols = df.columns.tolist()
+cols.insert(0, cols.pop(cols.index('date')))
+cols.insert(1, cols.pop(cols.index('target_bus12')))
+cols.insert(2, cols.pop(cols.index('target_umex')))
+df = df.reindex(columns=cols)
+
 df.to_csv(
     './data/prepared_data_full_us.csv.tar.bz2',
     compression='bz2',
