@@ -40,6 +40,9 @@ for i in range(0, len(kw_list), chunk_size):
             on=['geoname', 'date']
         )
 
+# move date to the front
+output_df = output_df[['date'] + [col for col in output_df.columns if col != 'date']]
+
 output_df.to_csv(
     './data/google_trends.csv.tar.bz2',
     compression='bz2',
