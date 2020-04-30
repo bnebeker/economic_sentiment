@@ -62,7 +62,10 @@ cols.insert(1, cols.pop(cols.index('target_bus12')))
 cols.insert(2, cols.pop(cols.index('target_umex')))
 df = df.reindex(columns=cols)
 
-df.to_csv(
+print(df.shape)
+output = df[df.target_bus12 != 0]
+print(output.shape)
+output.to_csv(
     './data/prepared_data_full_us.csv.tar.bz2',
     compression='bz2',
     index=False
