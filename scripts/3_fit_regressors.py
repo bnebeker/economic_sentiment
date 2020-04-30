@@ -93,11 +93,9 @@ en_r2, en_rmse, en_mape = model_eval(y, en_preds)
 limit_features = [
     'stock_market',
     'jobs',
-    'coronavirus',
     'unemployment',
     'stocks',
-    'unemployment_trend',
-    'pandemic'
+    'unemployment_trend'
 ]
 
 x = df.loc[:, limit_features]
@@ -107,7 +105,6 @@ linear_preds = linear_mdl.predict(x)
 
 linear_r2, linear_rmse, linear_mape = model_eval(y, linear_preds)
 print(cross_val_score(linear_mdl, x, y, cv=5))
-
 
 df.to_csv(
     './assets/outputs/df_with_preds.csv.tar.bz2',
