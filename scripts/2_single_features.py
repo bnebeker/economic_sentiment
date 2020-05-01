@@ -20,8 +20,8 @@ df = pd.read_csv(
     compression='bz2'
 )
 
-target = 'target_bus12'
-# target = 'target_umex'
+# target = 'target_bus12'
+target = 'target_umex'
 
 features = df.columns[3:]
 
@@ -108,6 +108,7 @@ for f in features:
     output = output.append(_tmp, ignore_index=True)
 
 output.sort_values(by='linear_r2', ascending=False, inplace=True)
+print(output.head(10))
 
 output.to_csv(
     './assets/outputs/single_feature_report_{}.csv.tar.bz2'.format(target),
