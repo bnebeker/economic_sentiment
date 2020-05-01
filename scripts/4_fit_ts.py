@@ -10,15 +10,10 @@ import statsmodels.api as sm
 import itertools
 import random
 from pandas.plotting import autocorrelation_plot
+from scripts.functions import ts_evaluation, mape
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
-
-
-def mape(y_true, y_pred):
-    y_true, y_pred = np.array(y_true), np.array(y_pred)
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
 
 df = pd.read_csv(
     './data/prepared_data_full_us.csv.tar.bz2',
@@ -38,9 +33,9 @@ df_model.columns = ['ds', 'y']
 # df_model.plot()
 # plt.show()
 
-ac_plot = autocorrelation_plot(df_model.y)
-plt.show()
-ac_plot.figure.savefig('./assets/outputs/charts/autocorrelation.png')
+# ac_plot = autocorrelation_plot(df_model.y)
+# plt.show()
+# ac_plot.figure.savefig('./assets/outputs/charts/autocorrelation.png')
 
 # sd = sm.tsa.seasonal_decompose(df_model.y, model='add', freq=192)
 # sd_plot = sd.plot()
@@ -59,34 +54,134 @@ test_min = test_df.ds.min()
 
 
 ########################################################################################
-#      PROPHET (not expecting much here, y not seasonal in nature
+#      ARIMAX - EXOG, NO SEASONAL
 ########################################################################################
 
-prophet = Prophet(seasonality_mode='multiplicative')
+# single
+param = (1, 1, 1)
 
-# simple prophet model
-p = prophet.fit(train_df)
-future = prophet.make_future_dataframe(periods=50, freq='M')
+mod = sm.tsa.statespace.SARIMAX(
+    train_df.y,
+    exog=train_exog,
+    order=param,
+    enforce_stationarity=False,
+    enforce_invertibility=False
+)
 
-# make dates beginning of month
-future['ds'] = future['ds'].values.astype('datetime64[M]')
+arimax_model = mod.fit()
+aic_tmp = arimax_model.aic
+print('ARIMA{} - AIC:{}'.format(param, arimax_model.aic))
 
-forecast = p.predict(future)
-fig = p.plot(forecast)
-# a = add_changepoints_to_plot(fig.gca(), p, forecast)
-fig.show()
+full_preds, forecast = ts_evaluation(model=arimax_model, train_df=train_df, test_df=test_df, test_exog=test_exog)
 
-fig2 = p.plot_components(forecast)
-fig2.show()
+ax = full_preds.plot(x="ds", y='y', legend=False)
+ax2 = ax.twinx()
+full_preds.plot(x="ds", y="yhat", ax=ax2, legend=False, color="r")
+ax.figure.legend()
+plt.show()
 
-pred_df = forecast.merge(df_model, how='left', on='ds')
-pred_df.loc[:, 'error'] = pred_df.loc[:, 'y'] - pred_df.loc[:, 'yhat']
 
-pred_df_test = pred_df[(~pred_df.y.isnull()) & (pred_df.ds >= test_min)]
+# RANDOM SEARCH
+p = d = q = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20]
+pdq = list(itertools.product(p, d, q))
 
-mape_error = mape(pred_df_test.y, pred_df_test.yhat)
-print(mape_error)
-# baseline model, 42% error
+best_score = float("inf")
+best_config = []
+
+param_results = pd.DataFrame(columns=[
+    'p',
+    'd',
+    'q',
+    'aic',
+    'test_mape'
+])
+
+# PROXY RANDOM SEARCH
+
+for i in range(0, 250):
+    param = random.choice(pdq)
+
+    print("ITERATION {}".format(i))
+    print(param)
+
+    try:
+        mod = sm.tsa.statespace.SARIMAX(
+            train_df.y,
+            exog=train_exog,
+            order=param,
+            enforce_stationarity=False,
+            enforce_invertibility=False
+        )
+
+        results = mod.fit()
+        aic_tmp = results.aic
+        print('ARIMA{} - AIC:{}'.format(param, results.aic))
+        if best_score > aic_tmp:
+            best_score = aic_tmp
+
+        _p = param[0]
+        _d = param[1]
+        _q = param[2]
+        _, _, mape_output = ts_evaluation(model=results, train_df=train_df, test_df=test_df, test_exog=test_exog)
+        _param_results = pd.DataFrame(columns=[
+            'p',
+            'd',
+            'q',
+            'aic',
+            'test_mape'
+        ])
+        _param_results.loc[0] = [_p, _d, _q, aic_tmp, mape_output]
+
+        param_results = param_results.append(_param_results, ignore_index=True)
+
+        param_results.to_csv(
+            './assets/outputs/arimax_tuning.csv',
+            index=False
+        )
+    except:
+        continue
+
+    i += 1
+
+print(param_results.sort_values(by='test_mape').head())
+
+###########################################################################################
+# test some top arima AIC score combos
+###########################################################################################
+# 83  3.0  1.0  6.0  1169.291283   7.076952
+# 14  2.0  1.0  1.0  1206.949111   7.224276
+# 34  4.0  1.0  2.0  1198.300839   7.431334
+# 98  1.0  1.0  2.0  1202.377115   7.547029
+# 54  2.0  2.0  2.0  1200.735950   7.589708
+# 172  15.0  1.0  2.0  1117.736468   6.636232
+# 77    9.0  1.0  6.0  1179.649237   7.459309
+# 101   0.0  2.0  3.0  1197.242704   7.679653
+# 24    3.0  2.0  1.0  1200.636546   7.860023
+# 168   1.0  1.0  5.0  1175.816784   8.075036
+
+param = (2, 1, 2)
+
+mod = sm.tsa.statespace.SARIMAX(
+    train_df.y,
+    exog=train_exog,
+    order=param,
+    enforce_stationarity=False,
+    enforce_invertibility=False
+)
+
+arimax_model = mod.fit()
+aic_tmp = arimax_model.aic
+print('ARIMA{} - AIC:{}'.format(param, arimax_model.aic))
+
+full_preds, forecast, m = ts_evaluation(model=arimax_model, train_df=train_df, test_df=test_df, test_exog=test_exog)
+
+ax = full_preds.plot(x="ds", y='y', legend=False)
+ax2 = ax.twinx()
+full_preds.plot(x="ds", y="yhat", ax=ax2, legend=False, color="r")
+ax.figure.legend()
+plt.show()
+
+
 
 
 ########################################################################################
@@ -220,8 +315,12 @@ for i in range(0, 100):
 ###########################################################################################
 # test some top arima AIC score combos
 ###########################################################################################
-param = (0, 1, 2)
-param_seasonal = (2, 0, 1, 52)
+
+# 1
+# 2.0,3.0,1.0,6.0,6.0,0.0,12.0,129.7791765363384
+
+param = (2, 3, 1)
+param_seasonal = (6, 6, 0, 12)
 mod = sm.tsa.statespace.SARIMAX(
     train_df.y,
     order=param,
@@ -230,21 +329,40 @@ mod = sm.tsa.statespace.SARIMAX(
     enforce_invertibility=False
 )
 
-arima_model = mod.fit()
-print('ARIMA{}x{} - AIC:{}'.format(param, param_seasonal, arima_model.aic))
+mdl1 = mod.fit()
+print('ARIMA{}x{} - AIC:{}'.format(param, param_seasonal, mdl1.aic))
 arima_forecast = test_df
-preds = arima_model.forecast(test_df.shape[0])
+preds = mdl1.forecast(test_df.shape[0], exog=test_exog)
 arima_forecast.loc[:, 'yhat'] = preds
 arima_forecast.loc[:, 'y_error'] = arima_forecast.loc[:, 'y'] - arima_forecast.loc[:, 'yhat']
 arima_forecast.loc[:, 'y_pct_error'] = arima_forecast.loc[:, 'y_error'] / arima_forecast.loc[:, 'y']
 arima_forecast.loc[:, 'y_abs_pct_error'] = abs(arima_forecast.loc[:, 'y_pct_error'])
-# arima_forecast.loc[:, 'y_in_yhat_band'] = np.where((arima_forecast.y >= arima_forecast.yhat_lower) & (arima_forecast.y <= arima_forecast.yhat_upper), 1, 0)
+# arima_forecast.loc[:, 'y_in_yhat_band'] = np.where(
+# (arima_forecast.y >= arima_forecast.yhat_lower) & (arima_forecast.y <= arima_forecast.yhat_upper), 1, 0)
 
 print(arima_forecast.y_abs_pct_error.describe())
 
 print("MAPE:")
 print(mape(arima_forecast.y, arima_forecast.yhat))
 # MAPE:
+
+sarimax_train_preds = mdl1.predict(full_results=True)
+
+sarimax_df_train = pd.concat([train_df, sarimax_train_preds], axis=1)
+sarimax_df_train.columns = ['ds', 'y', 'yhat']
+
+# cut after a couple periods
+sarimax_df_train = sarimax_df_train[sarimax_df_train.ds >= '2004-04-01']
+
+full_preds = sarimax_df_train.append(sarimax_forecast.loc[:, ['ds', 'y', 'yhat']])
+
+ax = full_preds.plot(x="ds", y='y', legend=False)
+ax2 = ax.twinx()
+full_preds.plot(x="ds", y="yhat", ax=ax2, legend=False, color="r")
+ax.figure.legend()
+plt.show()
+
+
 
 
 param = (6, 2, 8)
@@ -272,5 +390,38 @@ print(arima_forecast.y_abs_pct_error.describe())
 print("MAPE:")
 print(mape(arima_forecast.y, arima_forecast.yhat))
 # MAPE:
+
+
+
+
+########################################################################################
+#      PROPHET (not expecting much here, y not seasonal in nature
+########################################################################################
+
+prophet = Prophet(seasonality_mode='multiplicative')
+
+# simple prophet model
+p = prophet.fit(train_df)
+future = prophet.make_future_dataframe(periods=50, freq='M')
+
+# make dates beginning of month
+future['ds'] = future['ds'].values.astype('datetime64[M]')
+
+forecast = p.predict(future)
+fig = p.plot(forecast)
+# a = add_changepoints_to_plot(fig.gca(), p, forecast)
+fig.show()
+
+fig2 = p.plot_components(forecast)
+fig2.show()
+
+pred_df = forecast.merge(df_model, how='left', on='ds')
+pred_df.loc[:, 'error'] = pred_df.loc[:, 'y'] - pred_df.loc[:, 'yhat']
+
+pred_df_test = pred_df[(~pred_df.y.isnull()) & (pred_df.ds >= test_min)]
+
+mape_error = mape(pred_df_test.y, pred_df_test.yhat)
+print(mape_error)
+# baseline model, 42% error
 
 
