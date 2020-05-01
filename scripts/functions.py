@@ -1,6 +1,6 @@
 import pandas as pd
 from pytrends.request import TrendReq
-
+import numpy as np
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
@@ -53,3 +53,36 @@ def google_trends_historical(kw_list=None, year_end='2020', month_end='04', geo=
     df.columns = map(str.lower, df.columns)
 
     return df
+
+
+def mape(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
+def ts_evaluation(model=None, train_df=None, test_df=None, test_exog=None):
+    forecast_df = test_df.copy()
+    preds = model.forecast(test_df.shape[0], exog=test_exog)
+    forecast_df.loc[:, 'yhat'] = preds
+    forecast_df.loc[:, 'y_error'] = forecast_df.loc[:, 'y'] - forecast_df.loc[:, 'yhat']
+    forecast_df.loc[:, 'y_pct_error'] = forecast_df.loc[:, 'y_error'] / forecast_df.loc[:, 'y']
+    forecast_df.loc[:, 'y_abs_pct_error'] = abs(forecast_df.loc[:, 'y_pct_error'])
+    # arima_forecast.loc[:, 'y_in_yhat_band'] = np.where((arima_forecast.y >= arima_forecast.yhat_lower) & (arima_forecast.y <= arima_forecast.yhat_upper), 1, 0)
+
+    print(forecast_df.y_abs_pct_error.describe())
+
+    print("MAPE:")
+    model_mape = mape(forecast_df.y, forecast_df.yhat)
+    print(model_mape)
+
+    train_preds = model.predict(full_results=True)
+
+    out_train = pd.concat([train_df, train_preds], axis=1)
+    out_train.columns = ['ds', 'y', 'yhat']
+
+    # cut after a couple periods
+    out_train = out_train[out_train.ds >= '2004-04-01']
+
+    full_preds = out_train.append(forecast_df.loc[:, ['ds', 'y', 'yhat']])
+
+    return full_preds, forecast_df, model_mape
