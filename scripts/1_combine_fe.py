@@ -18,13 +18,6 @@ df_t = pd.read_csv(
 
 df_t.loc[:, 'date'] = pd.to_datetime(df_t.loc[:, 'date'])
 
-# originally pulled but don't want to include anymore
-df_t.drop([
-    'covid',
-    'coronavirus',
-    'pandemic'
-], inplace=True, axis=1)
-
 print("SENTIMENT DATA...")
 print(df_s.shape)
 print(df_s.head())
