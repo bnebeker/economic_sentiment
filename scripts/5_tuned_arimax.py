@@ -6,6 +6,7 @@ import itertools
 import random
 from pandas.plotting import autocorrelation_plot
 from scripts.functions import ts_evaluation, mape
+import joblib
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
@@ -60,6 +61,8 @@ full_preds.plot(x="ds", y="yhat", ax=ax2, legend=False, color="r")
 ax.figure.legend()
 plt.show()
 
+# serialize best model
+joblib.dump(arimax_model, './assets/models/arimax.ml')
 
 # OTHER TESTS:
 # #2, MAPE ~7.2%
