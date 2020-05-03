@@ -82,23 +82,25 @@ plt.show()
 
 
 # RANDOM SEARCH
-p = d = q = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20]
+p = d = q = list(range(0, 25))
 pdq = list(itertools.product(p, d, q))
 
 best_score = float("inf")
 best_config = []
 
-param_results = pd.DataFrame(columns=[
-    'p',
-    'd',
-    'q',
-    'aic',
-    'test_mape'
-])
+# param_results = pd.DataFrame(columns=[
+#     'p',
+#     'd',
+#     'q',
+#     'aic',
+#     'test_mape'
+# ])
+# read in last run and append to it
+param_results = pd.read_csv('./assets/outputs/arimax_tuning.csv')
 
 # PROXY RANDOM SEARCH
 
-for i in range(0, 250):
+for i in range(0, 500):
     param = random.choice(pdq)
 
     print("ITERATION {}".format(i))
@@ -148,6 +150,7 @@ print(param_results.sort_values(by='test_mape').head())
 ###########################################################################################
 # test some top arima AIC score combos
 ###########################################################################################
+# 716  4.0  2.0  5.0  1160.458098   7.019894
 # 181  8.0  1.0  6.0  1148.145325   7.117879
 # 53   5.0  2.0  5.0  1162.852995   7.245784
 # 133  2.0  2.0  2.0  1185.913040   7.389793
