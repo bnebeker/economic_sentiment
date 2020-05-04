@@ -54,6 +54,7 @@ output_df_all_us.to_csv(
     index=False
 )
 
+
 # BY REGION
 chunk_size = 1
 for i in range(0, len(kw_list), chunk_size):

@@ -5,7 +5,7 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
 
-def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None):
+def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None, resolution='REGION'):
     pytrend = TrendReq()
     date_list = pd.date_range(start_string, end_string, freq='1M') - pd.offsets.MonthBegin(1)
 
@@ -20,8 +20,9 @@ def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None)
             pytrend.build_payload(kw_list, cat=0, timeframe=timeframe, geo='US', gprop='')
 
             # Interest by region
+            # DMA ~ MAJOR CITY, REGION == STATE
             _df = pytrend.interest_by_region(
-                resolution='DMA'
+                resolution=resolution
             )  # metro level data ( you can change 'DMA' to 'CITY', 'REGION' )
             _df.reset_index(inplace=True)
             _df.loc[:, 'date'] = dt
@@ -67,7 +68,8 @@ def ts_evaluation(model=None, train_df=None, test_df=None, test_exog=None):
     forecast_df.loc[:, 'y_error'] = forecast_df.loc[:, 'y'] - forecast_df.loc[:, 'yhat']
     forecast_df.loc[:, 'y_pct_error'] = forecast_df.loc[:, 'y_error'] / forecast_df.loc[:, 'y']
     forecast_df.loc[:, 'y_abs_pct_error'] = abs(forecast_df.loc[:, 'y_pct_error'])
-    # arima_forecast.loc[:, 'y_in_yhat_band'] = np.where((arima_forecast.y >= arima_forecast.yhat_lower) & (arima_forecast.y <= arima_forecast.yhat_upper), 1, 0)
+    # arima_forecast.loc[:, 'y_in_yhat_band'] = np.where((arima_forecast.y >= arima_forecast.yhat_lower) &
+    # (arima_forecast.y <= arima_forecast.yhat_upper), 1, 0)
 
     print(forecast_df.y_abs_pct_error.describe())
 
