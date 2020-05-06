@@ -56,6 +56,40 @@ def google_trends_historical(kw_list=None, year_end='2020', month_end='04', geo=
     return df
 
 
+def google_trends_daily(kw_list=None, start_string='2020-01-01', end_string=None, resolution='REGION'):
+    pytrend = TrendReq()
+    date_list = pd.date_range(start_string, end_string, freq='1D')
+
+    data_list = []
+
+    for index, dt in enumerate(date_list):
+        next_dt = index + 1
+        if next_dt < len(date_list):
+            timeframe = dt.strftime('%Y-%m-%d') + ' ' + date_list[next_dt].strftime('%Y-%m-%d')
+            print("DATE:", timeframe)
+
+            pytrend.build_payload(kw_list, cat=0, timeframe=timeframe, geo='US', gprop='')
+
+            # Interest by region
+            # DMA ~ MAJOR CITY, REGION == STATE
+            _df = pytrend.interest_by_region(
+                resolution=resolution
+            )  # metro level data ( you can change 'DMA' to 'CITY', 'REGION' )
+            _df.reset_index(inplace=True)
+            _df.loc[:, 'date'] = dt
+            print(_df.head())
+            print("\n\n")
+            data_list.append(_df)
+
+    df = pd.concat(data_list)
+    print(df.shape)
+    ## columns w/ spaces to _
+    df.columns = df.columns.str.replace(' ', '_')
+    df.columns = map(str.lower, df.columns)
+
+    return df
+
+
 def mape(y_true, y_pred):
     y_true, y_pred = np.array(y_true), np.array(y_pred)
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
