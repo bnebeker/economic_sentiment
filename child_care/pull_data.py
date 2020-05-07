@@ -1,4 +1,4 @@
-from scripts.functions import google_trends_historical
+from scripts.functions import google_trends_historical_daily
 import pandas as pd
 
 pd.set_option('display.max_columns', 500)
@@ -26,10 +26,10 @@ output_df = pd.DataFrame()
 
 start_date = '2020-01-01'
 year_end = 2020
-month_end = '04'
+month_end = '05'
 end_date = str(year_end) + '-' + str(month_end) + '-' + '01'
 
-date_list = pd.date_range(start_date, end_date, freq='1M') - pd.offsets.MonthBegin(1)
+date_list = pd.date_range(start_date, end_date, freq='1D')
 
 for geo in state_list:
     print(geo)
@@ -37,14 +37,16 @@ for geo in state_list:
         list_subset = kw_list[i:i + 1]
 
         print(list_subset)
-        _df = google_trends_historical(
+        _df = google_trends_historical_daily(
             kw_list=list_subset,
             geo='US-{}'.format(geo)
         )
 
         if _df.empty:
+            col = list_subset[0].replace(' ', '_')
+
             _df.loc[:, 'date'] = date_list
-            _df.loc[:, list_subset[0]] = 0
+            _df.loc[:, col] = 0
             _df.loc[:, 'ispartial'] = False
             _df.drop('index', axis=1, inplace=True)
 
@@ -75,3 +77,13 @@ output_df.to_csv(
     './child_care/google_trends_childcare.csv',
     index=False
 )
+
+
+# testing
+output_df_al = output_df[output_df.geo == 'AL']
+output_df_ca = output_df[output_df.geo == 'CA']
+output_df_ri = output_df[output_df.geo == 'RI']
+
+print(output_df_al.describe())
+print(output_df_ca.describe())
+print(output_df_ri.describe())
