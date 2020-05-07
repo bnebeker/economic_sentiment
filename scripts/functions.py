@@ -57,10 +57,11 @@ def google_trends_historical(kw_list=None, year_end='2020', month_end='05', geo=
     return df
 
 
-def google_trends_historical_daily(kw_list=None, year_end='2020', month_end='05', geo="US"):
+def google_trends_historical_daily(kw_list=None, year_end='2020', month_end='05', geo="US",
+                                   year_start='2020', month_start='01'):
     pytrend = TrendReqDaily()
 
-    start_date = '2004-01-01'
+    start_date = str(year_start) + '-' + str(month_start) + '-' + '01'
     end_date = str(year_end) + '-' + str(month_end) + '-' + '01'
     timeframe = start_date + ' ' + end_date
 
