@@ -73,10 +73,10 @@ output_df.to_csv(
     index=False
 )
 
-output_df.to_csv(
-    './child_care/google_trends_childcare.csv',
-    index=False
-)
+# output_df.to_csv(
+#     './child_care/google_trends_childcare.csv',
+#     index=False
+# )
 
 
 # testing
