@@ -39,7 +39,7 @@ def google_trends_data(kw_list=None, start_string='2004-01-01', end_string=None,
     return df
 
 
-def google_trends_historical(kw_list=None, year_end='2020', month_end='04', geo="US"):
+def google_trends_historical(kw_list=None, year_end='2020', month_end='05', geo="US"):
     pytrend = TrendReq()
 
     start_date = '2004-01-01'
