@@ -1,4 +1,4 @@
-from scripts.functions import google_trends_data, google_trends_historical
+from scripts.functions import google_trends_historical
 import pandas as pd
 
 pd.set_option('display.max_columns', 500)
@@ -86,8 +86,10 @@ for geo in state_list:
         )
 
         if _df.empty:
+            col = list_subset[0].replace(' ', '_')
+
             _df.loc[:, 'date'] = date_list
-            _df.loc[:, list_subset[0]] = 0
+            _df.loc[:, col] = 0
             _df.loc[:, 'ispartial'] = False
             _df.drop('index', axis=1, inplace=True)
 
