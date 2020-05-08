@@ -57,12 +57,12 @@ def google_trends_historical(kw_list=None, year_end='2020', month_end='05', geo=
     return df
 
 
-def google_trends_historical_daily(kw_list=None, year_end='2020', month_end='05', geo="US",
-                                   year_start='2020', month_start='01'):
+def google_trends_historical_daily(kw_list=None, year_end='2020', month_end='04', geo="US",
+                                   year_start='2020', month_start='01', end_day='14'):
     pytrend = TrendReqDaily()
 
     start_date = str(year_start) + '-' + str(month_start) + '-' + '01'
-    end_date = str(year_end) + '-' + str(month_end) + '-' + '01'
+    end_date = str(year_end) + '-' + str(month_end) + '-' + end_day
     timeframe = start_date + ' ' + end_date
 
     pytrend.build_payload(kw_list, cat=0, timeframe=timeframe, geo=geo, gprop='')

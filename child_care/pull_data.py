@@ -26,8 +26,9 @@ output_df = pd.DataFrame()
 
 start_date = '2020-01-01'
 year_end = 2020
-month_end = '05'
-end_date = str(year_end) + '-' + str(month_end) + '-' + '01'
+month_end = '04'
+day_end = '14'
+end_date = str(year_end) + '-' + str(month_end) + '-' + day_end
 
 date_list = pd.date_range(start_date, end_date, freq='1D')
 
