@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scripts.functions import lag_features
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
@@ -40,11 +41,7 @@ df = df_t.merge(
 # not good process but small df, fine for now
 col_list = df.columns[1:-2]
 
-for col in col_list:
-    new_col = col + '_lag'
-    df.loc[:, new_col] = df.loc[:, col].shift(1)
-    df.loc[:, col + '_trend'] = df.loc[:, col] - df.loc[:, new_col]
-    df.loc[:, col + '_pct_change'] = (df.loc[:, col] - df.loc[:, new_col]) / df.loc[:, new_col]
+df = lag_features(df=df, col_list=col_list)
 
 # fill nulls with zeros
 df.fillna(0, inplace=True)
@@ -52,8 +49,8 @@ df.fillna(0, inplace=True)
 # replace inf with 1
 df.replace([np.inf], 1, inplace=True)
 
-# drop first row, no lagged features
-df.drop(df.index[0], inplace=True)
+# drop first two rows, no lagged features
+df.drop(df.index[0:2], inplace=True)
 
 # bring target values to the front
 cols = df.columns.tolist()
@@ -67,6 +64,38 @@ output = df[df.target_bus12 != 0]
 print(output.shape)
 output.to_csv(
     './data/prepared_data_full_us.csv.tar.bz2',
+    compression='bz2',
+    index=False
+)
+
+## BY STATE
+df_t = pd.read_csv(
+    './data/google_trends.csv.tar.bz2',
+    compression='bz2'
+)
+
+cols = df_t.columns.tolist()
+cols.insert(0, cols.pop(cols.index('date')))
+cols.insert(1, cols.pop(cols.index('geo')))
+df_t = df_t.reindex(columns=cols)
+
+col_list = df_t.columns[2:]
+
+df_t = lag_features(df=df_t, col_list=col_list)
+
+# fill nulls with zeros
+df_t.fillna(0, inplace=True)
+
+# replace inf with 1
+df_t.replace([np.inf], 1, inplace=True)
+
+# drop first two rows, no lagged features
+df_t.drop(df_t.index[0:2], inplace=True)
+
+print(df_t.shape)
+
+df_t.to_csv(
+    './data/prepared_data_by_state.csv.tar.bz2',
     compression='bz2',
     index=False
 )
