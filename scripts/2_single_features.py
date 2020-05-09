@@ -113,7 +113,7 @@ output.sort_values(by='linear_r2', ascending=False, inplace=True)
 print(output.head(10))
 
 output.to_csv(
-    './assets/outputs/single_feature_report.csv.tar.bz2'.format(target),
+    './assets/outputs/single_feature_report.csv.tar.bz2',
     compression='bz2',
     index=False
 )
