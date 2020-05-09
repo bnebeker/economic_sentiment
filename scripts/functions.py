@@ -107,3 +107,17 @@ def ts_evaluation(model=None, train_df=None, test_df=None, test_exog=None):
     full_preds = out_train.append(forecast_df.loc[:, ['ds', 'y', 'yhat']])
 
     return full_preds, forecast_df, model_mape
+
+
+def lag_features(df=None, col_list=None):
+    for col in col_list:
+        lag1 = col + '_lag1'
+        lag2 = col + '_lag2'
+        df.loc[:, lag1] = df.loc[:, col].shift(1)
+        df.loc[:, lag2] = df.loc[:, col].shift(2)
+        df.loc[:, col + '_trend_1'] = df.loc[:, col] - df.loc[:, lag1]
+        df.loc[:, col + '_trend_2'] = df.loc[:, col] - df.loc[:, lag2]
+        df.loc[:, col + '_pct_change_1'] = (df.loc[:, col] - df.loc[:, lag1]) / df.loc[:, lag1]
+        df.loc[:, col + '_pct_change_2'] = (df.loc[:, col] - df.loc[:, lag2]) / df.loc[:, lag2]
+
+    return df
