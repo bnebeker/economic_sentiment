@@ -4,6 +4,7 @@ from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
 import numpy as np
+import matplotlib.pyplot as plt
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
@@ -13,16 +14,17 @@ df = pd.read_csv(
     compression='bz2'
 )
 
+features = df.columns[3:]
+df.loc[:, 'ds'] = pd.to_datetime(df.date)
+
 target = 'target_bus12'
 # target = 'target_umex'
-
-features = df.columns[3:]
 
 x = df.loc[:, features]
 y = df.loc[:, target]
 
 # initialize tree & linear model
-tree = DecisionTreeRegressor(max_depth=3)
+tree = DecisionTreeRegressor(max_depth=5)
 lr = LinearRegression()
 lasso = LassoCV(cv=5)
 elastic = ElasticNetCV()
@@ -42,13 +44,6 @@ def model_eval(y_true=y, y_pred=None):
 
     return model_r2, model_rmse, model_mape
 
-target = 'target_bus12'
-# target = 'target_umex'
-
-features = df.columns[3:]
-
-x = df.loc[:, features]
-y = df.loc[:, target]
 
 print('FITTING DECISION TREE...')
 tree_mdl = tree.fit(x, y)
@@ -91,11 +86,13 @@ en_r2, en_rmse, en_mape = model_eval(y, en_preds)
 
 # linear model on subset of features
 limit_features = [
-    'stock_market',
-    'jobs',
-    'unemployment',
-    'stocks',
-    'unemployment_trend'
+    'unemployment_insurance_lag1',
+    'unemployment_insurance',
+    'unemployment_insurance_lag2',
+    'wage_growth',
+    'wage_growth_lag2',
+    'unemployment_insurance',
+    'unemployment_lag1'
 ]
 
 x = df.loc[:, limit_features]
@@ -111,4 +108,11 @@ df.to_csv(
     compression='bz2',
     index=False
 )
+
+ax = df.plot(x="ds", y=target, legend=False)
+ax2 = ax.twinx()
+df.plot(x="ds", y="linear_prediction_target_bus12", ax=ax2, legend=False, color="r")
+ax.figure.legend()
+plt.show()
+
 
