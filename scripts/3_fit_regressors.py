@@ -75,6 +75,10 @@ for feature in feature_imp_df.feature:
 df.loc[:, 'tree_prediction_{}'.format(target)] = tree_preds
 df.loc[:, 'tree_preds_error'] = df.loc[:, 'target_bus12'] - df.loc[:, 'tree_prediction_target_bus12']
 
+fig = plt.figure()
+plt.hist(df.tree_preds_error)
+plt.savefig('./assets/outputs/charts/tree_errors')
+
 # FITTING DECISION TREE...
 # MODEL R^2
 # 0.9095699333617757
