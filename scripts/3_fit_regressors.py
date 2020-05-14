@@ -5,6 +5,7 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
@@ -42,6 +43,9 @@ def model_eval(y_true=y, y_pred=None):
     print("MODEL R^2")
     print(model_r2)
 
+    print("MODEL RMSE")
+    print(model_rmse)
+
     return model_r2, model_rmse, model_mape
 
 
@@ -51,15 +55,31 @@ tree_preds = tree_mdl.predict(x)
 
 tree_r2, tree_rmse, tree_mape = model_eval(y, tree_preds)
 
-tree_mdl.feature_importances_
+feature_imp = dict(zip(x.columns, tree_mdl.feature_importances_))
+feature_imp_df = pd.DataFrame(list(feature_imp.items()), columns=['feature', 'importance'])
+
+feature_imp_df = feature_imp_df[feature_imp_df.importance > 0].sort_values(by='importance', ascending=False)
+
+for feature in feature_imp_df.feature:
+    fig = plt.figure()
+    corr, _ = pearsonr(df.loc[:, feature], df.loc[:, target])
+    # ax1 = fig
+    plt.scatter(df.loc[:, feature], df.loc[:, target])
+    plt.xlabel(feature)
+    plt.ylabel(target)
+    plt.title("CORRELATION: {}".format(round(corr, 2)))
+    plt.savefig('./assets/outputs/charts/correlation_{}'.format(feature))
+
 # plot_tree(tree_mdl, feature_names=features, fontsize=12)
 
-df.loc[:, 'tree_prediction_target_bus12'] = tree_preds
+df.loc[:, 'tree_prediction_{}'.format(target)] = tree_preds
 df.loc[:, 'tree_preds_error'] = df.loc[:, 'target_bus12'] - df.loc[:, 'tree_prediction_target_bus12']
 
 # FITTING DECISION TREE...
 # MODEL R^2
-# 0.6633697461005208
+# 0.9095699333617757
+# MODEL RMSE
+# 49.72811246966992
 
 print('FITTING LINEAR MODEL...')
 linear_mdl = lr.fit(x, y)
