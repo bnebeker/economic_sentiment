@@ -49,6 +49,10 @@ def model_eval(y_true=y, y_pred=None):
     return model_r2, model_rmse, model_mape
 
 
+#######################################################################################################################
+# #      FIT DECISION TREE
+#######################################################################################################################
+
 print('FITTING DECISION TREE...')
 tree_mdl = tree.fit(x, y)
 tree_preds = tree_mdl.predict(x)
@@ -85,6 +89,10 @@ plt.savefig('./assets/outputs/charts/tree_errors')
 # MODEL RMSE
 # 49.72811246966992
 
+#######################################################################################################################
+# #      FIT LINEAR MODELS
+#######################################################################################################################
+
 print('FITTING LINEAR MODEL...')
 linear_mdl = lr.fit(x, y)
 linear_preds = linear_mdl.predict(x)
@@ -108,6 +116,10 @@ en_preds = en_mdl.predict(x)
 en_r2, en_rmse, en_mape = model_eval(y, en_preds)
 
 
+#######################################################################################################################
+# #      FIT MODEL WITH SUBSET OF FEATURES
+#######################################################################################################################
+
 # linear model on subset of features
 limit_features = [
     'unemployment_insurance_lag1',
@@ -116,7 +128,9 @@ limit_features = [
     'wage_growth',
     'wage_growth_lag2',
     'unemployment_insurance',
-    'unemployment_lag1'
+    'unemployment_lag1',
+    'economy',
+    'unemployment'
 ]
 
 x = df.loc[:, limit_features]
@@ -125,7 +139,7 @@ linear_mdl = lr.fit(x, y)
 linear_preds = linear_mdl.predict(x)
 
 linear_r2, linear_rmse, linear_mape = model_eval(y, linear_preds)
-print(cross_val_score(linear_mdl, x, y, cv=5))
+print(cross_val_score(linear_mdl, x, y, cv=5, scoring='r2'))
 
 df.to_csv(
     './assets/outputs/df_with_preds.csv.tar.bz2',
