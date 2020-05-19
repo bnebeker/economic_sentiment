@@ -6,6 +6,7 @@ from sklearn.model_selection import cross_val_score
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
+import joblib
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
@@ -64,15 +65,15 @@ feature_imp_df = pd.DataFrame(list(feature_imp.items()), columns=['feature', 'im
 
 feature_imp_df = feature_imp_df[feature_imp_df.importance > 0].sort_values(by='importance', ascending=False)
 
-for feature in feature_imp_df.feature:
-    fig = plt.figure()
-    corr, _ = pearsonr(df.loc[:, feature], df.loc[:, target])
-    # ax1 = fig
-    plt.scatter(df.loc[:, feature], df.loc[:, target])
-    plt.xlabel(feature)
-    plt.ylabel(target)
-    plt.title("CORRELATION: {}".format(round(corr, 2)))
-    plt.savefig('./assets/outputs/charts/correlation_{}'.format(feature))
+# for feature in feature_imp_df.feature:
+#     fig = plt.figure()
+#     corr, _ = pearsonr(df.loc[:, feature], df.loc[:, target])
+#     # ax1 = fig
+#     plt.scatter(df.loc[:, feature], df.loc[:, target])
+#     plt.xlabel(feature)
+#     plt.ylabel(target)
+#     plt.title("CORRELATION: {}".format(round(corr, 2)))
+#     plt.savefig('./assets/outputs/charts/correlation_{}'.format(feature))
 
 # plot_tree(tree_mdl, feature_names=features, fontsize=12)
 
@@ -88,6 +89,25 @@ plt.savefig('./assets/outputs/charts/tree_errors')
 # 0.9095699333617757
 # MODEL RMSE
 # 49.72811246966992
+
+print(df.tree_preds_error.describe())
+joblib.dump(tree_mdl, './assets/models/decision_tree.ml')
+
+# apply to state level data
+df_state = pd.read_csv(
+    './data/prepared_data_by_state.csv.tar.bz2',
+    compression='bz2'
+)
+
+state_preds = tree_mdl.predict(df_state.loc[:, features])
+pred_name = 'tree_prediction_{}'.format(target)
+df_state.loc[:, pred_name] = state_preds
+df_state_lim = df_state.loc[:, ['date', 'geo', pred_name]]
+
+df_state.to_csv(
+    './assets/outputs/model_outputs/tree_outputs.csv',
+    index=False
+)
 
 #######################################################################################################################
 # #      FIT LINEAR MODELS
