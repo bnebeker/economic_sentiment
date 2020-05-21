@@ -121,3 +121,12 @@ def lag_features(df=None, col_list=None):
         df.loc[:, col + '_pct_change_2'] = (df.loc[:, col] - df.loc[:, lag2]) / df.loc[:, lag2]
 
     return df
+
+
+def state_level_pred(state_df=None, model=None, features=None, target=None):
+    state_preds = model.predict(state_df.loc[:, features])
+    pred_name = 'tree_prediction_{}'.format(target)
+    state_df.loc[:, pred_name] = state_preds
+    # df_state_lim = state_df.loc[:, ['date', 'geo', pred_name]]
+
+    return state_df

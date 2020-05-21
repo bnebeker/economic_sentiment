@@ -7,12 +7,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import joblib
+from scripts.functions import state_level_pred
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
 df = pd.read_csv(
     './data/prepared_data_full_us.csv.tar.bz2',
+    compression='bz2'
+)
+
+df_state = pd.read_csv(
+    './data/prepared_data_by_state.csv.tar.bz2',
     compression='bz2'
 )
 
@@ -94,17 +100,14 @@ print(df.tree_preds_error.describe())
 joblib.dump(tree_mdl, './assets/models/decision_tree.ml')
 
 # apply to state level data
-df_state = pd.read_csv(
-    './data/prepared_data_by_state.csv.tar.bz2',
-    compression='bz2'
+df_state_tree = state_level_pred(
+    state_df=df_state,
+    model=tree_mdl,
+    features=features,
+    target=target
 )
 
-state_preds = tree_mdl.predict(df_state.loc[:, features])
-pred_name = 'tree_prediction_{}'.format(target)
-df_state.loc[:, pred_name] = state_preds
-df_state_lim = df_state.loc[:, ['date', 'geo', pred_name]]
-
-df_state.to_csv(
+df_state_tree.to_csv(
     './assets/outputs/model_outputs/tree_outputs.csv',
     index=False
 )
@@ -120,15 +123,23 @@ linear_preds = linear_mdl.predict(x)
 linear_r2, linear_rmse, linear_mape = model_eval(y, linear_preds)
 print(cross_val_score(linear_mdl, x, y, cv=5, scoring='r2'))
 
-df.loc[:, 'linear_prediction_target_bus12'] = linear_preds
+df.loc[:, 'linear_prediction_{}'.format(target)] = linear_preds
 df.loc[:, 'linear_preds_error'] = df.loc[:, 'target_bus12'] - df.loc[:, 'linear_prediction_target_bus12']
 
+fig = plt.figure()
+plt.hist(df.linear_preds_error)
+plt.savefig('./assets/outputs/charts/lm_errors')
+print(df.linear_preds_error.describe())
+
+
+# lasso
 print('FITTING LASSO LINEAR MODEL...')
 lasso_mdl = lasso.fit(x, y)
 lasso_preds = lasso_mdl.predict(x)
 
 lasso_r2, lasso_rmse, lasso_mape = model_eval(y, lasso_preds)
 
+# en
 print("ELASTICNET MODEL...")
 en_mdl = elastic.fit(x, y)
 en_preds = en_mdl.predict(x)
@@ -167,10 +178,12 @@ df.to_csv(
     index=False
 )
 
+
+# compare models against reality
 ax = df.plot(x="ds", y=target, legend=False)
 ax2 = ax.twinx()
-df.plot(x="ds", y="linear_prediction_target_bus12", ax=ax2, legend=False, color="r")
+df.plot(x="ds", y="linear_prediction_{}".format(target), ax=ax2, legend=False, color="r")
+df.plot(x="ds", y="tree_prediction_{}".format(target), ax=ax2, legend=False, color="g")
+
 ax.figure.legend()
 plt.show()
-
-
