@@ -41,16 +41,23 @@ df = df_t.merge(
 # not good process but small df, fine for now
 col_list = df.columns[1:-2]
 
-df = lag_features(df=df, col_list=col_list)
 
-# fill nulls with zeros
-df.fillna(0, inplace=True)
+def create_dataset(data=None, features=None):
+    df = lag_features(df=data, col_list=features)
 
-# replace inf with 1
-df.replace([np.inf], 1, inplace=True)
+    # fill nulls with zeros
+    df.fillna(0, inplace=True)
 
-# drop first two rows, no lagged features
-df.drop(df.index[0:2], inplace=True)
+    # replace inf with 1
+    df.replace([np.inf], 1, inplace=True)
+
+    # drop first two rows, no lagged features
+    df.drop(df.index[0:2], inplace=True)
+
+    return df
+
+
+df = create_dataset(data=df, features=col_list)
 
 # bring target values to the front
 cols = df.columns.tolist()
@@ -63,12 +70,46 @@ print(df.shape)
 output = df[df.target_bus12 != 0]
 print(output.shape)
 output.to_csv(
-    './data/prepared_data_full_us.csv.tar.bz2',
+    './data/prepared/prepared_data_full_us.csv.tar.bz2',
     compression='bz2',
     index=False
 )
 
-## BY STATE
+###########################################################################################################
+#      EARNINGS DATA
+###########################################################################################################
+df_earn_n = pd.read_csv(
+    './data/earnings_national.csv.tar.bz2',
+    compression='bz2'
+)
+
+df_earn_n.loc[:, 'day'] = 1
+df_earn_n.loc[:, 'date'] = pd.to_datetime(df_earn_n[['year', 'month', 'day']])
+
+df_earn_n = df_t.merge(
+    df_earn_n,
+    how='left',
+    on='date'
+)
+
+df_earn_n = create_dataset(data=df_earn_n, features=col_list)
+
+# bring target values to the front
+cols = df_earn_n.columns.tolist()
+cols.insert(0, cols.pop(cols.index('date')))
+cols.insert(1, cols.pop(cols.index('privatenatlemp')))
+cols.insert(2, cols.pop(cols.index('weeklynatlearn')))
+df_earn_n = df_earn_n.reindex(columns=cols)
+
+df_earn_n.to_csv(
+    './data/prepared/earnings_national.csv.tar.bz2',
+    index=False,
+    compression='bz2'
+)
+
+###########################################################################################################
+#      BY STATE
+###########################################################################################################
 df_t = pd.read_csv(
     './data/google_trends.csv.tar.bz2',
     compression='bz2'
@@ -81,21 +122,29 @@ df_t = df_t.reindex(columns=cols)
 
 col_list = df_t.columns[2:]
 
-df_t = lag_features(df=df_t, col_list=col_list)
-
-# fill nulls with zeros
-df_t.fillna(0, inplace=True)
-
-# replace inf with 1
-df_t.replace([np.inf], 1, inplace=True)
-
-# drop first two rows, no lagged features
-df_t.drop(df_t.index[0:2], inplace=True)
+df_t = create_dataset(data=df_t, features=col_list)
 
 print(df_t.shape)
 
 df_t.to_csv(
-    './data/prepared_data_by_state.csv.tar.bz2',
+    './data/prepared/prepared_data_by_state.csv.tar.bz2',
     compression='bz2',
     index=False
 )
+
+
+###########################################################################################################
+#      EARNINGS DATA BY STATE
+###########################################################################################################
+df_earn_st = pd.read_csv(
+    './data/earnings_state.csv.tar.bz2',
+    compression='bz2'
+)
+
+df_earn_st.loc[:, 'day'] = 1
+df_earn_st.loc[:, 'date'] = pd.to_datetime(df_earn_st[['year', 'month', 'day']])
+
+## map st to geo
+## join with google trends data
+
+df_earn_st = create_dataset(data=df_earn_st, features=col_list)
