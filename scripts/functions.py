@@ -1,6 +1,7 @@
 import pandas as pd
 from pytrends.request import TrendReq
 import numpy as np
+from sklearn.metrics import r2_score, mean_squared_error
 from scripts.pytrends_functions import TrendReqDaily
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
@@ -130,3 +131,21 @@ def state_level_pred(state_df=None, model=None, features=None, target=None):
     # df_state_lim = state_df.loc[:, ['date', 'geo', pred_name]]
 
     return state_df
+
+
+def mean_absolute_percentage_error(y_true, y_pred):
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+
+def model_eval(y_true=None, y_pred=None):
+    model_r2 = r2_score(y_true, y_pred)
+    model_rmse = mean_squared_error(y_true, y_pred)
+    model_mape = mean_absolute_percentage_error(y_true, y_pred)
+
+    print("MODEL R^2")
+    print(model_r2)
+
+    print("MODEL RMSE")
+    print(model_rmse)
+
+    return model_r2, model_rmse, model_mape
