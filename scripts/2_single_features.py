@@ -16,7 +16,7 @@ def mean_absolute_percentage_error(y_true, y_pred):
 
 
 df = pd.read_csv(
-    './data/prepared_data_full_us.csv.tar.bz2',
+    './data/prepared/prepared_data_full_us.csv.tar.bz2',
     compression='bz2'
 )
 

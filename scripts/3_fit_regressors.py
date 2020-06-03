@@ -1,24 +1,23 @@
 import pandas as pd
 from sklearn.tree import DecisionTreeRegressor, plot_tree
 from sklearn.linear_model import LinearRegression, LassoCV, ElasticNetCV
-from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.model_selection import cross_val_score
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 import joblib
-from scripts.functions import state_level_pred
+from scripts.functions import state_level_pred, mean_absolute_percentage_error, model_eval
 
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
 df = pd.read_csv(
-    './data/prepared_data_full_us.csv.tar.bz2',
+    './data/prepared/prepared_data_full_us.csv.tar.bz2',
     compression='bz2'
 )
 
 df_state = pd.read_csv(
-    './data/prepared_data_by_state.csv.tar.bz2',
+    './data/prepared/prepared_data_by_state.csv.tar.bz2',
     compression='bz2'
 )
 
@@ -36,24 +35,6 @@ tree = DecisionTreeRegressor(max_depth=5)
 lr = LinearRegression()
 lasso = LassoCV(cv=5)
 elastic = ElasticNetCV()
-
-
-def mean_absolute_percentage_error(y_true, y_pred):
-    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-
-def model_eval(y_true=y, y_pred=None):
-    model_r2 = r2_score(y_true, y_pred)
-    model_rmse = mean_squared_error(y_true, y_pred)
-    model_mape = mean_absolute_percentage_error(y_true, y_pred)
-
-    print("MODEL R^2")
-    print(model_r2)
-
-    print("MODEL RMSE")
-    print(model_rmse)
-
-    return model_r2, model_rmse, model_mape
 
 
 #######################################################################################################################
