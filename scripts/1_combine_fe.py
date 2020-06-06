@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scripts.functions import lag_features
+from assets.fips_dict import state_codes
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.max_rows', 500)
 
@@ -87,7 +88,7 @@ df_earn_n.loc[:, 'day'] = 1
 df_earn_n.loc[:, 'date'] = pd.to_datetime(df_earn_n[['year', 'month', 'day']])
 
 df_earn_n = df_t.merge(
-    df_earn_n,
+    df_earn_n.loc[:, ['date', 'weeklynatlearn']],
     how='left',
     on='date'
 )
@@ -97,8 +98,7 @@ df_earn_n = create_dataset(data=df_earn_n, features=col_list)
 # bring target values to the front
 cols = df_earn_n.columns.tolist()
 cols.insert(0, cols.pop(cols.index('date')))
-cols.insert(1, cols.pop(cols.index('privatenatlemp')))
-cols.insert(2, cols.pop(cols.index('weeklynatlearn')))
+cols.insert(1, cols.pop(cols.index('weeklynatlearn')))
 df_earn_n = df_earn_n.reindex(columns=cols)
 
 df_earn_n.to_csv(
@@ -122,11 +122,13 @@ df_t = df_t.reindex(columns=cols)
 
 col_list = df_t.columns[2:]
 
-df_t = create_dataset(data=df_t, features=col_list)
+df_by_state = create_dataset(data=df_t, features=col_list)
 
-print(df_t.shape)
+df_by_state.loc[:, 'date'] = pd.to_datetime(df_by_state.date)
 
-df_t.to_csv(
+print(df_by_state.shape)
+
+df_by_state.to_csv(
     './data/prepared/prepared_data_by_state.csv.tar.bz2',
     compression='bz2',
     index=False
@@ -146,5 +148,20 @@ df_earn_st.loc[:, 'date'] = pd.to_datetime(df_earn_st[['year', 'month', 'day']])
 
 ## map st to geo
 ## join with google trends data
+state_fips = dict([int(fips), cd] for cd, fips in state_codes.items())
 
-df_earn_st = create_dataset(data=df_earn_st, features=col_list)
+df_earn_st.loc[:, 'geo'] = df_earn_st.loc[:, 'st'].map(state_fips)
+
+df_earn_st = df_earn_st.loc[:, ['date', 'geo', 'weeklyearn']].merge(
+    df_by_state,
+    how='left',
+    on=['date', 'geo']
+)
+
+df_earn_st = df_earn_st[~df_earn_st.weeklyearn.isnull()]
+
+df_earn_st.to_csv(
+    './data/prepared/earnings_by_state.csv.tar.bz2',
+    compression='bz2',
+    index=False
+)
