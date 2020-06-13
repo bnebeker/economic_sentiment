@@ -81,7 +81,7 @@ print(df.tree_preds_error.describe())
 joblib.dump(tree_mdl, './assets/models/decision_tree.ml')
 
 # apply to state level data
-df_state_tree = state_level_pred(
+df_state_tree, pred_name = state_level_pred(
     state_df=df_state,
     model=tree_mdl,
     features=features,

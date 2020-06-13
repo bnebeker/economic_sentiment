@@ -16,15 +16,16 @@ df = pd.read_csv(
     compression='bz2'
 )
 
-# df_state = pd.read_csv(
-#     './data/earnings_state.csv.tar.bz2',
-#     compression='bz2'
-# )
+df_state = pd.read_csv(
+    './data/prepared/earnings_by_state.csv.tar.bz2',
+    compression='bz2'
+)
 
-features = df.columns[3:]
+features = df.columns[2:]
 df.loc[:, 'ds'] = pd.to_datetime(df.date)
 
 target = 'weeklynatlearn'
+target_state = 'weeklyearn'
 
 df = df[df.loc[:, target] != 0].copy()
 
@@ -66,11 +67,11 @@ feature_imp_df = feature_imp_df[feature_imp_df.importance > 0].sort_values(by='i
 # plot_tree(tree_mdl, feature_names=features, fontsize=12)
 
 df.loc[:, 'tree_prediction_{}'.format(target)] = tree_preds
-df.loc[:, 'tree_preds_error'] = df.loc[:, 'target_bus12'] - df.loc[:, 'tree_prediction_target_bus12']
+df.loc[:, 'tree_preds_error'] = df.loc[:, target] - df.loc[:, 'tree_prediction_{}'.format(target)]
 
 fig = plt.figure()
 plt.hist(df.tree_preds_error)
-plt.savefig('./assets/outputs/charts/tree_errors')
+plt.savefig('./assets/outputs/charts/earnings_tree_errors')
 
 # FITTING DECISION TREE...
 # MODEL R^2
@@ -89,3 +90,33 @@ df_state_tree = state_level_pred(
     target=target
 )
 
+
+#######################################################################################################################
+# #      FIT LINEAR MODELS
+#######################################################################################################################
+
+print('FITTING LINEAR MODEL...')
+linear_mdl = lr.fit(x, y)
+linear_preds = linear_mdl.predict(x)
+
+linear_r2, linear_rmse, linear_mape = model_eval(y, linear_preds)
+print(cross_val_score(linear_mdl, x, y, cv=5, scoring='r2'))
+
+df.loc[:, 'linear_prediction_{}'.format(target)] = linear_preds
+df.loc[:, 'linear_preds_error'] = df.loc[:, target] - df.loc[:, 'linear_prediction_{}'.format(target)]
+
+fig = plt.figure()
+plt.hist(df.linear_preds_error)
+plt.savefig('./assets/outputs/charts/earnings_lm_errors')
+print(df.linear_preds_error.describe())
+
+df_state_lm, pred_name = state_level_pred(
+    state_df=df_state,
+    model=linear_mdl,
+    features=features,
+    target=target
+)
+
+## state level eval
+linear_preds_state = df_state_lm.loc[:, pred_name]
+linear_r2, linear_rmse, linear_mape = model_eval(df_state_lm.loc[:, target_state], df_state_lm.loc[:, pred_name])
