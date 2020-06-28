@@ -126,11 +126,12 @@ def lag_features(df=None, col_list=None):
 
 def state_level_pred(state_df=None, model=None, features=None, target=None):
     state_preds = model.predict(state_df.loc[:, features])
-    pred_name = 'tree_prediction_{}'.format(target)
+    model_name = type(model).__name__
+    pred_name = '{}_prediction_{}'.format(model_name, target)
     state_df.loc[:, pred_name] = state_preds
     # df_state_lim = state_df.loc[:, ['date', 'geo', pred_name]]
 
-    return state_df
+    return state_df, pred_name
 
 
 def mean_absolute_percentage_error(y_true, y_pred):

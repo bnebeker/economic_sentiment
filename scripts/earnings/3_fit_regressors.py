@@ -83,12 +83,32 @@ print(df.tree_preds_error.describe())
 joblib.dump(tree_mdl, './assets/models/decision_tree.ml')
 
 # apply to state level data
-df_state_tree = state_level_pred(
+df_state_tree, tree_pred_name = state_level_pred(
     state_df=df_state,
     model=tree_mdl,
     features=features,
     target=target
 )
+
+## state level eval
+linear_preds_state = df_state_tree.loc[:, tree_pred_name]
+linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
+
+
+# test on just top 5 states by pop
+top_states = ['CA', 'TX', 'FL', 'NY', 'IL']
+df_state_lim = df_state[df_state.geo.isin(top_states)]
+
+df_state_tree, tree_pred_name = state_level_pred(
+    state_df=df_state_lim,
+    model=tree_mdl,
+    features=features,
+    target=target
+)
+
+## state level eval
+linear_preds_state = df_state_tree.loc[:, tree_pred_name]
+linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
 
 
 #######################################################################################################################
