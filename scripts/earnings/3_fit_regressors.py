@@ -110,6 +110,45 @@ df_state_tree, tree_pred_name = state_level_pred(
 linear_preds_state = df_state_tree.loc[:, tree_pred_name]
 linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
 
+## limit to highest feature imp
+feature_set = [
+    "unemployment_insurance",
+    "unemployment_insurance_lag2",
+    "unemployment_lag1",
+    "wage_growth",
+    "unemployment",
+    "jobs",
+    "instability",
+    "wage_growth_lag1",
+    "unemployment_insurance_lag1",
+    "stock_market_lag1"
+]
+
+x = df.loc[:, feature_set].copy()
+y = df.loc[:, target].copy()
+
+print('FITTING DECISION TREE...')
+tree_mdl = tree.fit(x, y)
+tree_preds = tree_mdl.predict(x)
+
+tree_r2, tree_rmse, tree_mape = model_eval(y, tree_preds)
+
+df_state_lim_features = df_state.loc[:, feature_set]
+df_state_lim_features.loc[:, target_state] = df_state.loc[:, target_state]
+
+# apply to state level data
+df_state_tree, tree_pred_name = state_level_pred(
+    state_df=df_state_lim_features,
+    model=tree_mdl,
+    features=feature_set,
+    target=target_state
+)
+
+## state level eval
+linear_preds_state = df_state_tree.loc[:, tree_pred_name]
+linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
+
+
 
 #######################################################################################################################
 # #      FIT LINEAR MODELS
