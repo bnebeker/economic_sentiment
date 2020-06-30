@@ -149,6 +149,21 @@ linear_preds_state = df_state_tree.loc[:, tree_pred_name]
 linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
 
 
+# limit states
+df_state_lim_features = df_state_lim.loc[:, feature_set]
+df_state_lim_features.loc[:, target_state] = df_state_lim.loc[:, target_state]
+
+# apply to state level data
+df_state_tree, tree_pred_name = state_level_pred(
+    state_df=df_state_lim_features,
+    model=tree_mdl,
+    features=feature_set,
+    target=target_state
+)
+
+## state level eval
+linear_preds_state = df_state_tree.loc[:, tree_pred_name]
+linear_r2, linear_rmse, linear_mape = model_eval(df_state_tree.loc[:, target_state], df_state_tree.loc[:, tree_pred_name])
 
 #######################################################################################################################
 # #      FIT LINEAR MODELS
